@@ -48,7 +48,7 @@ def main():
     storage = get_storage()
 
     logger.info("=" * 50)
-    logger.info("NONLINEAR COMPRESSION — UNet Autoencoder")
+    logger.info("NONLINEAR COMPRESSION - UNet Autoencoder")
     logger.info("=" * 50)
     logger.info(f"latent_dim : {args.latent_dim}")
     logger.info(f"n_epochs   : {args.n_epochs}")

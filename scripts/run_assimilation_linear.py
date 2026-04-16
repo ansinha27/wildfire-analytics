@@ -40,7 +40,7 @@ def main():
     storage = get_storage()
 
     logger.info("=" * 50)
-    logger.info("DATA ASSIMILATION — Linear (TSVD)")
+    logger.info("DATA ASSIMILATION - Linear (TSVD)")
     logger.info("=" * 50)
     logger.info(f"beta       : {args.beta}")
     logger.info(f"background : {data_config.background_path}")

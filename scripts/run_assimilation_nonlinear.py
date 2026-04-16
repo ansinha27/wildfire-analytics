@@ -39,7 +39,7 @@ def main():
     storage = get_storage()
 
     logger.info("=" * 50)
-    logger.info("DATA ASSIMILATION — Nonlinear (AE)")
+    logger.info("DATA ASSIMILATION - Nonlinear (AE)")
     logger.info("=" * 50)
     logger.info(f"beta       : {args.beta}")
     logger.info(f"background : {data_config.background_path}")

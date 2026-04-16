@@ -50,7 +50,7 @@ class LinearAssimilator:
         self.compressor = compressor
         self.mean = mean
         self.beta = beta
-        self.K = None  # Kalman gain — built during run()
+        self.K = None  # Kalman gain - built during run()
 
     def run(self, background_path: str, obs_path: str, truth_path: str) -> dict:
 
