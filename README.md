@@ -1,4 +1,4 @@
-# Ferguson Wildfire Analytics Pipeline
+# Wildfire Analytics Pipeline
 
 A modular, production-grade Python pipeline for large-scale wildfire data
 compression, fusion and assimilation built from real simulation and satellite
