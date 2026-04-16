@@ -43,48 +43,37 @@ class LinearAssimilator:
 
     def __init__(
         self,
-        compressor,       # fitted TruncatedSVD model
+        compressor,  # fitted TruncatedSVD model
         mean: np.ndarray,
-        beta: float = 0.68
+        beta: float = 0.68,
     ):
         self.compressor = compressor
         self.mean = mean
         self.beta = beta
-        self.K = None     # Kalman gain — built during run()
+        self.K = None  # Kalman gain — built during run()
 
-    def run(
-        self,
-        background_path: str,
-        obs_path: str,
-        truth_path: str
-    ) -> dict:
+    def run(self, background_path: str, obs_path: str, truth_path: str) -> dict:
 
-        X_b     = np.load(background_path, mmap_mode="r")
-        X_obs   = np.load(obs_path,        mmap_mode="r")
-        X_truth = np.load(truth_path,      mmap_mode="r")
+        X_b = np.load(background_path, mmap_mode="r")
+        X_obs = np.load(obs_path, mmap_mode="r")
+        X_truth = np.load(truth_path, mmap_mode="r")
 
         N, H, W = X_b.shape
         n_feats = H * W
-        K_dim   = self.compressor.n_components
+        K_dim = self.compressor.n_components
 
         logger.info(
-            f"assimilating {N} frames | "
-            f"spatial: {H}x{W} | "
-            f"latent dim: {K_dim}"
+            f"assimilating {N} frames | " f"spatial: {H}x{W} | " f"latent dim: {K_dim}"
         )
 
         # project all three datasets into latent space
         logger.info("projecting to latent space...")
-        Zb, Zo, Zt = self._project_all(
-            X_b, X_obs, X_truth, N, n_feats
-        )
+        Zb, Zo, Zt = self._project_all(X_b, X_obs, X_truth, N, n_feats)
 
         # background MSE before assimilation
-        bg_flat    = X_b.reshape(N, -1).astype(float)
+        bg_flat = X_b.reshape(N, -1).astype(float)
         truth_flat = X_truth[:N].reshape(N, -1).astype(float)
-        mse_background = float(
-            np.mean((bg_flat - truth_flat) ** 2)
-        )
+        mse_background = float(np.mean((bg_flat - truth_flat) ** 2))
         logger.info(f"background MSE: {mse_background:.3e}")
 
         # build Kalman gain matrix
@@ -101,41 +90,32 @@ class LinearAssimilator:
 
         # reconstruct to physical space
         with Timer("reconstruction") as t_recon:
-            X_a_flat = (
-                self.compressor.inverse_transform(Za) + self.mean
-            )
+            X_a_flat = self.compressor.inverse_transform(Za) + self.mean
 
-        mse_physical = float(
-            np.mean((X_a_flat - truth_flat) ** 2)
-        )
+        mse_physical = float(np.mean((X_a_flat - truth_flat) ** 2))
 
-        improvement = (
-            (mse_background - mse_physical)
-            / mse_background * 100
-        )
+        improvement = (mse_background - mse_physical) / mse_background * 100
 
         logger.info(f"analysis MSE: {mse_physical:.3e}")
-        logger.info(
-            f"improvement over background: {improvement:.1f}%"
-        )
+        logger.info(f"improvement over background: {improvement:.1f}%")
 
         return {
-            "mse_background":        mse_background,
-            "mse_latent":            mse_latent,
-            "mse_physical":          mse_physical,
-            "latent_update_time_s":  t_latent.elapsed,
+            "mse_background": mse_background,
+            "mse_latent": mse_latent,
+            "mse_physical": mse_physical,
+            "latent_update_time_s": t_latent.elapsed,
             "reconstruction_time_s": t_recon.elapsed,
-            "beta":                  self.beta,
-            "n_frames":              N
+            "beta": self.beta,
+            "n_frames": N,
         }
 
     def _project_all(
         self,
-        X_b:     np.ndarray,
-        X_obs:   np.ndarray,
+        X_b: np.ndarray,
+        X_obs: np.ndarray,
         X_truth: np.ndarray,
-        N:       int,
-        n_feats: int
+        N: int,
+        n_feats: int,
     ) -> tuple:
         K_dim = self.compressor.n_components
         Zb = np.zeros((N, K_dim))
@@ -143,26 +123,18 @@ class LinearAssimilator:
         Zt = np.zeros((N, K_dim))
 
         for i in range(N):
-            Zb[i] = self._project(X_b[i],     n_feats)
-            Zo[i] = self._project(X_obs[i],   n_feats)
+            Zb[i] = self._project(X_b[i], n_feats)
+            Zo[i] = self._project(X_obs[i], n_feats)
             Zt[i] = self._project(X_truth[i], n_feats)
 
         return Zb, Zo, Zt
 
-    def _project(
-        self,
-        frame:   np.ndarray,
-        n_feats: int
-    ) -> np.ndarray:
+    def _project(self, frame: np.ndarray, n_feats: int) -> np.ndarray:
         # flatten, centre, project into latent space
         flat = frame.reshape(-1).astype(float) - self.mean
         return self.compressor.transform(flat[None, :])[0]
 
-    def _build_kalman_gain(
-        self,
-        Zb:    np.ndarray,
-        K_dim: int
-    ) -> np.ndarray:
+    def _build_kalman_gain(self, Zb: np.ndarray, K_dim: int) -> np.ndarray:
         # empirical background covariance in latent space
         # full matrix so correlated modes share information
         Zb_ctr = Zb - Zb.mean(axis=0)
@@ -177,9 +149,7 @@ class LinearAssimilator:
         K_gain = B.dot(la.inv(B + R))
 
         logger.info(
-            f"Kalman gain built | "
-            f"beta={self.beta} | "
-            f"B shape: {B.shape}"
+            f"Kalman gain built | " f"beta={self.beta} | " f"B shape: {B.shape}"
         )
 
         return K_gain

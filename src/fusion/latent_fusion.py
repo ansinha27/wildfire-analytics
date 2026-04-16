@@ -23,11 +23,7 @@ logger = get_logger(__name__)
 
 class LatentFusion:
 
-    def __init__(
-        self,
-        compressor: TruncatedSVD,
-        mean: np.ndarray
-    ):
+    def __init__(self, compressor: TruncatedSVD, mean: np.ndarray):
         # takes the already-fitted TSVD model and mean vector
         # from the compression stage - no refitting needed
         self.compressor = compressor
@@ -35,11 +31,7 @@ class LatentFusion:
         self._spatial = None
 
     def fuse(
-        self,
-        obs_path: str,
-        idx1: int = 0,
-        idx2: int = -1,
-        threshold: float = 0.5
+        self, obs_path: str, idx1: int = 0, idx2: int = -1, threshold: float = 0.5
     ) -> dict:
         # load observations
         X_obs = np.load(obs_path, mmap_mode="r")
@@ -51,10 +43,7 @@ class LatentFusion:
         if idx2 < 0:
             idx2 = N + idx2
 
-        logger.info(
-            f"fusing frames {idx1} and {idx2} "
-            f"from {N} observations"
-        )
+        logger.info(f"fusing frames {idx1} and {idx2} " f"from {N} observations")
 
         # project both frames into latent space
         with Timer("latent fusion") as t:
@@ -69,8 +58,7 @@ class LatentFusion:
 
             # reconstruct fused frame
             rec_flat = (
-                self.compressor.inverse_transform(z_fused[None, :])[0]
-                + self.mean
+                self.compressor.inverse_transform(z_fused[None, :])[0] + self.mean
             )
             fused = rec_flat.reshape(H, W)
 
@@ -86,14 +74,10 @@ class LatentFusion:
             "obs2": X_obs[idx2],
             "idx1": idx1,
             "idx2": idx2,
-            "fusion_time_s": t.elapsed
+            "fusion_time_s": t.elapsed,
         }
 
-    def _project(
-        self,
-        frame: np.ndarray,
-        n_feats: int
-    ) -> np.ndarray:
+    def _project(self, frame: np.ndarray, n_feats: int) -> np.ndarray:
         # flatten, centre, project into latent space
         flat = frame.reshape(-1).astype(float) - self.mean
         return self.compressor.transform(flat[None, :])[0]

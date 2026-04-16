@@ -31,13 +31,13 @@ def parse_args():
         "--n_components",
         type=int,
         default=compression_config.n_components,
-        help=f"number of SVD modes (default: {compression_config.n_components})"
+        help=f"number of SVD modes (default: {compression_config.n_components})",
     )
     parser.add_argument(
         "--batch_size",
         type=int,
         default=compression_config.batch_size,
-        help="batch size for memory-mapped loading"
+        help="batch size for memory-mapped loading",
     )
     return parser.parse_args()
 
@@ -58,7 +58,7 @@ def main():
     compressor = TSVDCompressor(
         n_components=args.n_components,
         batch_size=args.batch_size,
-        n_iter=compression_config.n_iter
+        n_iter=compression_config.n_iter,
     )
 
     with Timer("full compression pipeline") as t:
@@ -78,7 +78,7 @@ def main():
         "n_components": args.n_components,
         "fit_time_s": t.elapsed,
         "reconstruction_time_s": recon_time,
-        "mse": mse
+        "mse": mse,
     }
     storage.save_results(results, "compression_results")
 

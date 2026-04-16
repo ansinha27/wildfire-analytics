@@ -28,12 +28,7 @@ class TSVDCompressor:
     # - much faster than IncrementalPCA on this data
     #   (28s vs 135s in my experiments)
 
-    def __init__(
-        self,
-        n_components: int = 114,
-        batch_size: int = 50,
-        n_iter: int = 7
-    ):
+    def __init__(self, n_components: int = 114, batch_size: int = 50, n_iter: int = 7):
         self.n_components = n_components
         self.batch_size = batch_size
         self.n_iter = n_iter
@@ -51,8 +46,7 @@ class TSVDCompressor:
         n_feats = int(np.prod(spatial))
 
         logger.info(
-            f"training data: {n_train} frames, "
-            f"spatial shape {self._spatial}"
+            f"training data: {n_train} frames, " f"spatial shape {self._spatial}"
         )
 
         # compute mean in batches - never load full array
@@ -63,20 +57,17 @@ class TSVDCompressor:
         # write centred data to a memmap on disk
         # so SVD doesn't need to re-centre on every pass
         logger.info("writing centred memmap to disk...")
-        centered = self._build_centered_memmap(
-            X, n_train, n_feats
-        )
+        centered = self._build_centered_memmap(X, n_train, n_feats)
 
         # fit the SVD
         logger.info(
-            f"fitting TruncatedSVD with "
-            f"n_components={self.n_components}..."
+            f"fitting TruncatedSVD with " f"n_components={self.n_components}..."
         )
         self.model = TruncatedSVD(
             n_components=self.n_components,
             algorithm="randomized",
             n_iter=self.n_iter,
-            random_state=0
+            random_state=0,
         )
 
         with Timer("TruncatedSVD fit") as t:
@@ -114,7 +105,7 @@ class TSVDCompressor:
 
         with Timer("reconstruction") as t:
             for i in range(0, n_test, self.batch_size):
-                batch = X_test[i:i + self.batch_size]
+                batch = X_test[i : i + self.batch_size]
                 batch_flat = batch.reshape(-1, n_feats).astype(float)
 
                 Z = self.transform(batch_flat)
@@ -129,17 +120,12 @@ class TSVDCompressor:
 
         return mse, t.elapsed
 
-    def _compute_mean(
-        self,
-        X: np.ndarray,
-        n_train: int,
-        n_feats: int
-    ) -> np.ndarray:
+    def _compute_mean(self, X: np.ndarray, n_train: int, n_feats: int) -> np.ndarray:
         mean = np.zeros(n_feats, dtype=float)
         total = 0
 
         for i in range(0, n_train, self.batch_size):
-            block = X[i:i + self.batch_size]
+            block = X[i : i + self.batch_size]
             block_flat = block.reshape(-1, n_feats).astype(float)
             mean += block_flat.sum(axis=0)
             total += block_flat.shape[0]
@@ -147,10 +133,7 @@ class TSVDCompressor:
         return mean / total
 
     def _build_centered_memmap(
-        self,
-        X: np.ndarray,
-        n_train: int,
-        n_feats: int
+        self, X: np.ndarray, n_train: int, n_feats: int
     ) -> np.ndarray:
         # write centred data to disk as float32 memmap
         # float32 halves memory vs float64 with negligible
@@ -159,18 +142,15 @@ class TSVDCompressor:
         path.parent.mkdir(parents=True, exist_ok=True)
 
         centered = np.memmap(
-            str(path),
-            mode="w+",
-            dtype="float32",
-            shape=(n_train, n_feats)
+            str(path), mode="w+", dtype="float32", shape=(n_train, n_feats)
         )
 
         for i in range(0, n_train, self.batch_size):
-            block = X[i:i + self.batch_size]
+            block = X[i : i + self.batch_size]
             block_flat = block.reshape(-1, n_feats).astype(float)
-            centered[i:i + block_flat.shape[0]] = (
-                block_flat - self.mean
-            ).astype("float32")
+            centered[i : i + block_flat.shape[0]] = (block_flat - self.mean).astype(
+                "float32"
+            )
 
         centered.flush()
         return centered

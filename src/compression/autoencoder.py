@@ -31,12 +31,7 @@ class FireDataset(Dataset):
     # wraps the memmap array and applies normalisation on the fly
     # mean/std are per-pixel maps computed from training data
 
-    def __init__(
-        self,
-        path: str,
-        mean: np.ndarray,
-        std: np.ndarray
-    ):
+    def __init__(self, path: str, mean: np.ndarray, std: np.ndarray):
         self.data = np.load(path, mmap_mode="r")
         self.mean = mean
         self.std = std
@@ -63,9 +58,7 @@ class UNetAE(nn.Module):
         self._feat_w = w // 8
 
         # encoder - progressively halve spatial dims
-        self.enc1 = nn.Sequential(
-            nn.Conv2d(1, 32, 3, padding=1), nn.ReLU(True)
-        )
+        self.enc1 = nn.Sequential(nn.Conv2d(1, 32, 3, padding=1), nn.ReLU(True))
         self.enc2 = nn.Sequential(
             nn.Conv2d(32, 64, 3, stride=2, padding=1), nn.ReLU(True)
         )
@@ -77,31 +70,21 @@ class UNetAE(nn.Module):
         )
 
         # bottleneck - this is the latent space
-        self.fc_enc = nn.Linear(
-            256 * self._feat_h * self._feat_w, latent_dim
-        )
-        self.fc_dec = nn.Linear(
-            latent_dim, 256 * self._feat_h * self._feat_w
-        )
+        self.fc_enc = nn.Linear(256 * self._feat_h * self._feat_w, latent_dim)
+        self.fc_dec = nn.Linear(latent_dim, 256 * self._feat_h * self._feat_w)
 
         # decoder - progressively double spatial dims
         self.dec4 = nn.Sequential(
-            nn.ConvTranspose2d(
-                256, 128, 3, stride=2, padding=1, output_padding=1
-            ),
-            nn.ReLU(True)
+            nn.ConvTranspose2d(256, 128, 3, stride=2, padding=1, output_padding=1),
+            nn.ReLU(True),
         )
         self.dec3 = nn.Sequential(
-            nn.ConvTranspose2d(
-                128, 64, 3, stride=2, padding=1, output_padding=1
-            ),
-            nn.ReLU(True)
+            nn.ConvTranspose2d(128, 64, 3, stride=2, padding=1, output_padding=1),
+            nn.ReLU(True),
         )
         self.dec2 = nn.Sequential(
-            nn.ConvTranspose2d(
-                64, 32, 3, stride=2, padding=1, output_padding=1
-            ),
-            nn.ReLU(True)
+            nn.ConvTranspose2d(64, 32, 3, stride=2, padding=1, output_padding=1),
+            nn.ReLU(True),
         )
         self.dec1 = nn.Conv2d(32, 1, 3, padding=1)
 
@@ -112,13 +95,7 @@ class UNetAE(nn.Module):
         e4 = self.enc4(e3)
         return self.fc_enc(e4.view(e4.size(0), -1)), e1, e2, e3
 
-    def decode(
-        self,
-        z: torch.Tensor,
-        e1=None,
-        e2=None,
-        e3=None
-    ) -> torch.Tensor:
+    def decode(self, z: torch.Tensor, e1=None, e2=None, e3=None) -> torch.Tensor:
         b = z.size(0)
         d4 = self.fc_dec(z).view(b, 256, self._feat_h, self._feat_w)
 
@@ -143,7 +120,7 @@ class EarlyStopping:
         self,
         patience: int = 10,
         delta: float = 1e-5,
-        path: str = "models/unet_ae_checkpoint.pt"
+        path: str = "models/unet_ae_checkpoint.pt",
     ):
         self.patience = patience
         self.delta = delta
@@ -157,17 +134,20 @@ class EarlyStopping:
         val_loss: float,
         model: nn.Module,
         optimizer: torch.optim.Optimizer,
-        epoch: int
+        epoch: int,
     ):
         if val_loss < self.best_loss - self.delta:
             self.best_loss = val_loss
             self.counter = 0
-            torch.save({
-                "epoch": epoch,
-                "model_state": model.state_dict(),
-                "optim_state": optimizer.state_dict(),
-                "best_loss": self.best_loss
-            }, self.path)
+            torch.save(
+                {
+                    "epoch": epoch,
+                    "model_state": model.state_dict(),
+                    "optim_state": optimizer.state_dict(),
+                    "best_loss": self.best_loss,
+                },
+                self.path,
+            )
         else:
             self.counter += 1
             if self.counter >= self.patience:
@@ -175,18 +155,18 @@ class EarlyStopping:
 
 
 def _sobel_edge_loss(
-    pred: torch.Tensor,
-    target: torch.Tensor,
-    device: torch.device
+    pred: torch.Tensor, target: torch.Tensor, device: torch.device
 ) -> torch.Tensor:
     # penalise differences in edge structure
     # this keeps the sharp fire boundaries intact
     # without this the reconstruction tends to blur the hotspot
-    sobel_x = torch.tensor(
-        [[1, 0, -1], [2, 0, -2], [1, 0, -1]],
-        dtype=torch.float32,
-        device=device
-    ).unsqueeze(0).unsqueeze(0)
+    sobel_x = (
+        torch.tensor(
+            [[1, 0, -1], [2, 0, -2], [1, 0, -1]], dtype=torch.float32, device=device
+        )
+        .unsqueeze(0)
+        .unsqueeze(0)
+    )
 
     sobel_y = sobel_x.transpose(2, 3)
 
@@ -212,7 +192,7 @@ class AutoencoderCompressor:
         alpha_mse: float = 1.0,
         alpha_edge: float = 0.1,
         patience: int = 10,
-        delta: float = 1e-5
+        delta: float = 1e-5,
     ):
         self.latent_dim = latent_dim
         self.batch_size = batch_size
@@ -223,9 +203,7 @@ class AutoencoderCompressor:
         self.patience = patience
         self.delta = delta
 
-        self.device = torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu"
-        )
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = None
         self.mean_map = None
         self.std_map = None
@@ -243,18 +221,12 @@ class AutoencoderCompressor:
 
         train_ds = FireDataset(train_path, self.mean_map, self.std_map)
         train_loader = DataLoader(
-            train_ds,
-            batch_size=self.batch_size,
-            shuffle=True,
-            num_workers=2
+            train_ds, batch_size=self.batch_size, shuffle=True, num_workers=2
         )
 
         optimizer = Adam(self.model.parameters(), lr=self.lr)
         scheduler = StepLR(optimizer, step_size=30, gamma=0.5)
-        stopper = EarlyStopping(
-            patience=self.patience,
-            delta=self.delta
-        )
+        stopper = EarlyStopping(patience=self.patience, delta=self.delta)
 
         logger.info(
             f"training UNetAE | "
@@ -265,9 +237,7 @@ class AutoencoderCompressor:
         train_losses, val_losses = [], []
 
         for epoch in range(1, self.n_epochs + 1):
-            train_loss = self._train_epoch(
-                train_loader, optimizer
-            )
+            train_loss = self._train_epoch(train_loader, optimizer)
             val_loss = self._val_epoch(train_loader)
 
             train_losses.append(train_loss)
@@ -287,14 +257,9 @@ class AutoencoderCompressor:
             scheduler.step()
 
         # reload best weights
-        ckpt = torch.load(
-            "models/unet_ae_checkpoint.pt",
-            map_location=self.device
-        )
+        ckpt = torch.load("models/unet_ae_checkpoint.pt", map_location=self.device)
         self.model.load_state_dict(ckpt["model_state"])
-        logger.info(
-            f"loaded best model from epoch {ckpt['epoch']}"
-        )
+        logger.info(f"loaded best model from epoch {ckpt['epoch']}")
 
         # save stats for later use in assimilation
         np.save("models/mean_map.npy", self.mean_map)
@@ -310,7 +275,7 @@ class AutoencoderCompressor:
 
         with torch.no_grad():
             for i in range(0, len(X), self.batch_size):
-                batch = X[i:i + self.batch_size]
+                batch = X[i : i + self.batch_size]
                 imgs = self._to_tensor(batch)
                 z, _, _, _ = self.model.encode(imgs)
                 results.append(z.cpu().numpy())
@@ -325,7 +290,7 @@ class AutoencoderCompressor:
         with torch.no_grad():
             for i in range(0, len(Z), self.batch_size):
                 batch = torch.from_numpy(
-                    Z[i:i + self.batch_size].astype(np.float32)
+                    Z[i : i + self.batch_size].astype(np.float32)
                 ).to(self.device)
                 rec = self.model.decode(batch)
                 results.append(rec.cpu().numpy().squeeze(1))
@@ -342,7 +307,7 @@ class AutoencoderCompressor:
 
         with Timer("ae reconstruction") as t:
             for i in range(0, n_test, self.batch_size):
-                batch = X_test[i:i + self.batch_size].astype(float)
+                batch = X_test[i : i + self.batch_size].astype(float)
                 Z = self.encode(batch)
                 rec = self.decode(Z)
                 sse += ((batch - rec) ** 2).sum()
@@ -352,10 +317,7 @@ class AutoencoderCompressor:
 
         return mse, t.elapsed
 
-    def _compute_stats(
-        self,
-        path: str
-    ) -> tuple[np.ndarray, np.ndarray]:
+    def _compute_stats(self, path: str) -> tuple[np.ndarray, np.ndarray]:
         X = np.load(path, mmap_mode="r")
         n, H, W = X.shape
         mm_batch = 64
@@ -365,21 +327,19 @@ class AutoencoderCompressor:
         count = 0
 
         for i in range(0, n, mm_batch):
-            blk = X[i:i + mm_batch].astype(float)
+            blk = X[i : i + mm_batch].astype(float)
             sum_ += blk.sum(axis=0)
-            sumsq += (blk ** 2).sum(axis=0)
+            sumsq += (blk**2).sum(axis=0)
             count += blk.shape[0]
 
         mean = sum_ / count
-        std = np.sqrt(sumsq / count - mean ** 2 + 1e-6)
+        std = np.sqrt(sumsq / count - mean**2 + 1e-6)
 
         return mean, std
 
     def _to_tensor(self, X: np.ndarray) -> torch.Tensor:
         normed = (X.astype(float) - self.mean_map) / self.std_map
-        return torch.from_numpy(normed).unsqueeze(1).float().to(
-            self.device
-        )
+        return torch.from_numpy(normed).unsqueeze(1).float().to(self.device)
 
     def _train_epoch(self, loader, optimizer) -> float:
         self.model.train()
@@ -389,12 +349,9 @@ class AutoencoderCompressor:
             batch = batch.to(self.device)
             optimizer.zero_grad()
             recon = self.model(batch)
-            loss = (
-                self.alpha_mse * F.mse_loss(recon, batch)
-                + self.alpha_edge * _sobel_edge_loss(
-                    recon, batch, self.device
-                )
-            )
+            loss = self.alpha_mse * F.mse_loss(
+                recon, batch
+            ) + self.alpha_edge * _sobel_edge_loss(recon, batch, self.device)
             loss.backward()
             optimizer.step()
             running += loss.item() * batch.size(0)
@@ -409,12 +366,9 @@ class AutoencoderCompressor:
             for batch in loader:
                 batch = batch.to(self.device)
                 recon = self.model(batch)
-                loss = (
-                    self.alpha_mse * F.mse_loss(recon, batch)
-                    + self.alpha_edge * _sobel_edge_loss(
-                        recon, batch, self.device
-                    )
-                )
+                loss = self.alpha_mse * F.mse_loss(
+                    recon, batch
+                ) + self.alpha_edge * _sobel_edge_loss(recon, batch, self.device)
                 running += loss.item() * batch.size(0)
 
         return running / len(loader.dataset)

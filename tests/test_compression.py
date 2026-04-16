@@ -10,14 +10,11 @@ import pytest
 from sklearn.decomposition import TruncatedSVD
 from src.compression.tsvd import TSVDCompressor
 
-
 # ── helpers ──────────────────────────────────────────────────
 
+
 def make_fake_data(
-    n_samples: int = 100,
-    h: int = 32,
-    w: int = 32,
-    seed: int = 0
+    n_samples: int = 100, h: int = 32, w: int = 32, seed: int = 0
 ) -> np.ndarray:
     # small synthetic fire-like data
     # sparse binary array - mimics the real dataset
@@ -28,7 +25,7 @@ def make_fake_data(
     for i in range(n_samples):
         cx = rng.integers(8, 24)
         cy = rng.integers(8, 24)
-        data[i, cx-2:cx+2, cy-2:cy+2] = 1.0
+        data[i, cx - 2 : cx + 2, cy - 2 : cy + 2] = 1.0
 
     return data
 
@@ -40,6 +37,7 @@ def save_fake_data(path: str, n: int = 100) -> np.ndarray:
 
 
 # ── TSVDCompressor tests ──────────────────────────────────────
+
 
 class TestTSVDCompressor:
 
@@ -109,7 +107,7 @@ class TestTSVDCompressor:
         test_path = str(tmp_path / "test.npy")
 
         save_fake_data(train_path, n=200)
-        save_fake_data(test_path,  n=50)
+        save_fake_data(test_path, n=50)
 
         compressor = TSVDCompressor(n_components=20, batch_size=50)
         compressor.fit(train_path)

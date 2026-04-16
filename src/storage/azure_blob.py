@@ -19,12 +19,7 @@ class AzureStorage(BaseStorage):
     #   export AZURE_STORAGE_CONNECTION_STRING=...
     #   export COSMOS_CONNECTION_STRING=...
 
-    def __init__(
-        self,
-        container_name: str,
-        cosmos_db: str,
-        cosmos_container: str
-    ):
+    def __init__(self, container_name: str, cosmos_db: str, cosmos_container: str):
         # lazy imports so local runs don't need azure packages
         from azure.storage.blob import BlobServiceClient
         from azure.cosmos import CosmosClient
@@ -33,17 +28,11 @@ class AzureStorage(BaseStorage):
         cosmos_str = os.environ.get("COSMOS_CONNECTION_STRING")
 
         if not conn_str:
-            raise EnvironmentError(
-                "AZURE_STORAGE_CONNECTION_STRING not set"
-            )
+            raise EnvironmentError("AZURE_STORAGE_CONNECTION_STRING not set")
         if not cosmos_str:
-            raise EnvironmentError(
-                "COSMOS_CONNECTION_STRING not set"
-            )
+            raise EnvironmentError("COSMOS_CONNECTION_STRING not set")
 
-        self.blob_client = BlobServiceClient.from_connection_string(
-            conn_str
-        )
+        self.blob_client = BlobServiceClient.from_connection_string(conn_str)
         self.container = container_name
 
         cosmos_client = CosmosClient.from_connection_string(cosmos_str)
@@ -53,7 +42,9 @@ class AzureStorage(BaseStorage):
         logger.info("azure storage clients initialised")
 
     def _get_blob(self, path: str):
-        return self.blob_client.get_container_client(self.container).get_blob_client(path)
+        return self.blob_client.get_container_client(self.container).get_blob_client(
+            path
+        )
 
     def load_array(self, path: str) -> np.ndarray:
         logger.info(f"downloading blob: {path}")
@@ -81,8 +72,5 @@ class AzureStorage(BaseStorage):
 
     def save_results(self, results: dict, run_id: str) -> None:
         # goes straight to Cosmos DB as a JSON document
-        self.cosmos_container.upsert_item({
-            "id": run_id,
-            **results
-        })
+        self.cosmos_container.upsert_item({"id": run_id, **results})
         logger.info(f"results written to cosmos: {run_id}")

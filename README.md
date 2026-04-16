@@ -1,7 +1,7 @@
 # Ferguson Wildfire Analytics Pipeline
 
 A modular, production-grade Python pipeline for large-scale wildfire data
-compression, fusion and assimilation — built from real simulation and satellite
+compression, fusion and assimilation - built from real simulation and satellite
 data of the Ferguson wildfire (California, 2018).
 
 ![tests](https://github.com/ansinha27/ferguson-wildfire-analytics/actions/workflows/run_tests.yml/badge.svg)
@@ -28,7 +28,7 @@ Assimilation (NL)       →  Kalman filter in AE latent space
 Results                 →  outputs/ (local) or Cosmos DB (Azure)
 ```
 
-The pipeline is **environment-agnostic** — it runs locally out of the box and
+The pipeline is **environment-agnostic** - it runs locally out of the box and
 switches to Azure Blob Storage + Cosmos DB by changing one environment variable.
 
 ---
@@ -37,7 +37,7 @@ switches to Azure Blob Storage + Cosmos DB by changing one environment variable.
 
 The core design decision was to separate the analytics pipeline from the storage
 layer entirely. The pipeline never knows or cares whether data lives on local
-disk or in Azure Blob Storage — it just calls `storage.load_array()` and
+disk or in Azure Blob Storage - it just calls `storage.load_array()` and
 `storage.save_results()`.
 
 This means moving to Azure requires no changes to any analytical code:
@@ -54,21 +54,21 @@ python pipeline.py
 ## Key Technical Decisions
 
 ### Linear Compression
-- Used **TruncatedSVD** over IncrementalPCA — 28s fit vs 135s on same data
-- Memory-mapped training data — never loads the full array into RAM
+- Used **TruncatedSVD** over IncrementalPCA - 28s fit vs 135s on same data
+- Memory-mapped training data - never loads the full array into RAM
 - 114 components captures 95% of variance on sparse binary fire masks
 
 ### Nonlinear Compression
-- **UNet autoencoder** with skip connections — preserves sharp fire boundaries
+- **UNet autoencoder** with skip connections - preserves sharp fire boundaries
   that a plain deep AE blurs out
-- Custom **Sobel edge loss** on top of MSE — explicitly penalises blurry edges
-- Early stopping with checkpointing — best weights reloaded after training
+- Custom **Sobel edge loss** on top of MSE - explicitly penalises blurry edges
+- Early stopping with checkpointing - best weights reloaded after training
 
 ### Data Assimilation
 - Kalman filter runs in **latent space**, not pixel space
 - 65,536-dimensional problem reduced to 114 dimensions before update
-- Full empirical covariance matrix **B** — correlated modes share information
-- **β** tuned by validation sweep — 0.68 gave optimal MSE
+- Full empirical covariance matrix **B** - correlated modes share information
+- **β** tuned by validation sweep - 0.68 gave optimal MSE
 - Nonlinear AE assimilation achieved **15× MSE improvement** over background
 
 ---
@@ -89,7 +89,7 @@ python pipeline.py
 ```
 ferguson-wildfire-analytics/
 │
-├── pipeline.py                  # master orchestrator — runs all stages
+├── pipeline.py                  # master orchestrator - runs all stages
 ├── config.py                    # all settings + storage factory
 ├── requirements.txt
 ├── requirements-azure.txt
@@ -192,7 +192,7 @@ pytest tests/ -v
 | Area | Detail |
 |---|---|
 | **Large data handling** | Memory-mapped arrays, batched processing, never loading full dataset into RAM |
-| **Cloud-agnostic design** | Storage abstraction layer — swap local for Azure with one config change |
+| **Cloud-agnostic design** | Storage abstraction layer - swap local for Azure with one config change |
 | **Deep learning** | UNet architecture, custom Sobel edge loss, early stopping, GPU/CPU portable |
 | **Data assimilation** | Kalman filter, empirical covariance estimation, latent space methods |
 | **Software engineering** | SOLID principles, type hints, structured logging, CI/CD, unit testing |

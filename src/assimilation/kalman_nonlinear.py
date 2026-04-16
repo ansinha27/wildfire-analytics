@@ -34,36 +34,26 @@ class NonlinearAssimilator:
         mean_map: np.ndarray,
         std_map: np.ndarray,
         latent_dim: int,
-        beta: float = 0.68
+        beta: float = 0.68,
     ):
         self.mean_map = mean_map
         self.std_map = std_map
         self.latent_dim = latent_dim
         self.beta = beta
 
-        self.device = torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu"
-        )
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # load the trained autoencoder
         H, W = mean_map.shape
         self.model = UNetAE(latent_dim, H, W).to(self.device)
-        self.model.load_state_dict(
-            torch.load(weights_path, map_location=self.device)
-        )
+        self.model.load_state_dict(torch.load(weights_path, map_location=self.device))
         self.model.eval()
 
         logger.info(
-            f"loaded UNetAE weights from {weights_path} | "
-            f"device: {self.device}"
+            f"loaded UNetAE weights from {weights_path} | " f"device: {self.device}"
         )
 
-    def run(
-        self,
-        background_path: str,
-        obs_path: str,
-        truth_path: str
-    ) -> dict:
+    def run(self, background_path: str, obs_path: str, truth_path: str) -> dict:
 
         X_b = np.load(background_path, mmap_mode="r")
         X_obs = np.load(obs_path, mmap_mode="r")
@@ -89,9 +79,7 @@ class NonlinearAssimilator:
         # background MSE before assimilation
         bg_flat = X_b.reshape(N, -1).astype(float)
         truth_flat = X_truth[:N].reshape(N, -1).astype(float)
-        mse_background = float(
-            np.mean((bg_flat - truth_flat) ** 2)
-        )
+        mse_background = float(np.mean((bg_flat - truth_flat) ** 2))
         logger.info(f"background MSE: {mse_background:.3e}")
 
         # build Kalman gain in AE latent space
@@ -109,9 +97,7 @@ class NonlinearAssimilator:
         with Timer("decoding") as t_decode:
             X_a = self._decode_all(Za, H, W)
 
-        mse_physical = float(
-            np.mean((X_a.reshape(N, -1) - truth_flat) ** 2)
-        )
+        mse_physical = float(np.mean((X_a.reshape(N, -1) - truth_flat) ** 2))
 
         logger.info(f"analysis MSE: {mse_physical:.3e}")
         logger.info(
@@ -127,21 +113,15 @@ class NonlinearAssimilator:
             "latent_update_time_s": t_latent.elapsed,
             "decoding_time_s": t_decode.elapsed,
             "beta": self.beta,
-            "n_frames": N
+            "n_frames": N,
         }
 
-    def _encode_all(
-        self,
-        X: np.ndarray,
-        N: int
-    ) -> np.ndarray:
+    def _encode_all(self, X: np.ndarray, N: int) -> np.ndarray:
         Z = np.zeros((N, self.latent_dim))
 
         with torch.no_grad():
             for i in range(N):
-                img = (
-                    X[i].astype(float) - self.mean_map
-                ) / self.std_map
+                img = (X[i].astype(float) - self.mean_map) / self.std_map
 
                 t = torch.from_numpy(img)[None, None].float().to(self.device)
 
@@ -150,19 +130,12 @@ class NonlinearAssimilator:
 
         return Z
 
-    def _decode_all(
-        self,
-        Z: np.ndarray,
-        H: int,
-        W: int
-    ) -> np.ndarray:
+    def _decode_all(self, Z: np.ndarray, H: int, W: int) -> np.ndarray:
         X_rec = np.zeros((len(Z), H, W))
 
         with torch.no_grad():
             # batch decode for speed
-            Z_tensor = torch.from_numpy(
-                Z.astype(np.float32)
-            ).to(self.device)
+            Z_tensor = torch.from_numpy(Z.astype(np.float32)).to(self.device)
 
             rec = self.model.decode(Z_tensor)
             X_rec = rec.cpu().numpy()[:, 0, :, :]
@@ -170,10 +143,7 @@ class NonlinearAssimilator:
         # un-normalise back to physical space
         return X_rec * self.std_map + self.mean_map
 
-    def _build_kalman_gain(
-        self,
-        Zb: np.ndarray
-    ) -> np.ndarray:
+    def _build_kalman_gain(self, Zb: np.ndarray) -> np.ndarray:
         Zb_ctr = Zb - Zb.mean(axis=0)
         B = np.cov(Zb_ctr, rowvar=False, ddof=1)
 
@@ -184,9 +154,7 @@ class NonlinearAssimilator:
         K_gain = B.dot(la.inv(B + R))
 
         logger.info(
-            f"Kalman gain built | "
-            f"beta={self.beta} | "
-            f"B shape: {B.shape}"
+            f"Kalman gain built | " f"beta={self.beta} | " f"B shape: {B.shape}"
         )
 
         return K_gain

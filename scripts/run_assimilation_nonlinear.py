@@ -13,12 +13,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from config import (
-    get_storage,
-    data_config,
-    assimilation_config,
-    path_config
-)
+from config import get_storage, data_config, assimilation_config, path_config
 from src.assimilation.kalman_nonlinear import NonlinearAssimilator
 from src.utils.logging_config import get_logger
 import numpy as np
@@ -34,7 +29,7 @@ def parse_args():
         "--beta",
         type=float,
         default=assimilation_config.beta,
-        help=f"observation error scale (default: {assimilation_config.beta})"
+        help=f"observation error scale (default: {assimilation_config.beta})",
     )
     return parser.parse_args()
 
@@ -60,13 +55,13 @@ def main():
         mean_map=mean_map,
         std_map=std_map,
         latent_dim=latent_dim,
-        beta=args.beta
+        beta=args.beta,
     )
 
     results = assimilator.run(
         background_path=data_config.background_path,
         obs_path=data_config.obs_path,
-        truth_path=data_config.test_path
+        truth_path=data_config.test_path,
     )
 
     storage.save_results(results, "assimilation_nonlinear_results")
@@ -80,15 +75,9 @@ def main():
         f"improvement    : "
         f"{((results['mse_background'] - results['mse_physical']) / results['mse_background'] * 100):.1f}%"
     )
-    logger.info(
-        f"encoding time  : {results['encoding_time_s']}s"
-    )
-    logger.info(
-        f"latent update  : {results['latent_update_time_s']}s"
-    )
-    logger.info(
-        f"decoding time  : {results['decoding_time_s']}s"
-    )
+    logger.info(f"encoding time  : {results['encoding_time_s']}s")
+    logger.info(f"latent update  : {results['latent_update_time_s']}s")
+    logger.info(f"decoding time  : {results['decoding_time_s']}s")
 
 
 if __name__ == "__main__":

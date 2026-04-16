@@ -23,7 +23,7 @@ def plot_frames(
     reconstructions: np.ndarray,
     n: int = 5,
     title: str = "reconstruction",
-    indices: list = None
+    indices: list = None,
 ) -> None:
     # side by side comparison of original vs reconstructed frames
     # useful sanity check after compression or assimilation
@@ -52,9 +52,7 @@ def plot_frames(
 
 
 def plot_cumulative_variance(
-    cumvar: np.ndarray,
-    k: int,
-    threshold: float = 0.95
+    cumvar: np.ndarray, k: int, threshold: float = 0.95
 ) -> None:
     # helps justify the choice of n_components
     # I used this to pick K=114 in the notebook
@@ -66,7 +64,7 @@ def plot_cumulative_variance(
         threshold,
         color="red",
         linestyle="--",
-        label=f"{int(threshold * 100)}% variance"
+        label=f"{int(threshold * 100)}% variance",
     )
 
     ax.set_xlabel("Number of components")
@@ -79,10 +77,7 @@ def plot_cumulative_variance(
     _save(fig, "cumulative_variance.png")
 
 
-def plot_training_curve(
-    train_losses: list,
-    val_losses: list
-) -> None:
+def plot_training_curve(train_losses: list, val_losses: list) -> None:
     # sanity check that the autoencoder actually converged
     # and didn't overfit
     fig, ax = plt.subplots(figsize=(8, 4))
@@ -105,7 +100,7 @@ def plot_assimilation_results(
     background: np.ndarray,
     analysis: np.ndarray,
     idx: int = 0,
-    label: str = "assimilation"
+    label: str = "assimilation",
 ) -> None:
     # three-way comparison: what the model predicted,
     # what we observed, and what the analysis produced
@@ -116,9 +111,7 @@ def plot_assimilation_results(
     vmax = truth.max()
 
     for ax, img, title in zip(
-        axes,
-        [truth, background, analysis],
-        ["Truth", "Background", "Analysis"]
+        axes, [truth, background, analysis], ["Truth", "Background", "Analysis"]
     ):
         im = ax.imshow(img, cmap="hot", vmin=vmin, vmax=vmax)
         ax.set_title(title)
@@ -130,10 +123,7 @@ def plot_assimilation_results(
 
 
 def plot_fusion_result(
-    obs1: np.ndarray,
-    obs2: np.ndarray,
-    fused: np.ndarray,
-    binary: np.ndarray
+    obs1: np.ndarray, obs2: np.ndarray, fused: np.ndarray, binary: np.ndarray
 ) -> None:
     # shows the two input observations and the fused output
     # side by side - makes it easy to explain in an interview
@@ -142,7 +132,7 @@ def plot_fusion_result(
     for ax, img, title in zip(
         axes,
         [obs1, obs2, fused, binary],
-        ["Observation 1", "Observation 2", "Fused", "Thresholded"]
+        ["Observation 1", "Observation 2", "Fused", "Thresholded"],
     ):
         ax.imshow(img, cmap="hot", vmin=0, vmax=1)
         ax.set_title(title)

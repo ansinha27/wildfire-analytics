@@ -17,10 +17,7 @@ def compute_mse(original: np.ndarray, reconstructed: np.ndarray) -> float:
     return mse
 
 
-def compute_compression_ratio(
-    original_shape: tuple,
-    compressed_dim: int
-) -> float:
+def compute_compression_ratio(original_shape: tuple, compressed_dim: int) -> float:
     # how much smaller is the compressed representation?
     # e.g. 256x256 -> 114 coefficients
     original_size = int(np.prod(original_shape))
@@ -29,18 +26,14 @@ def compute_compression_ratio(
 
 
 def evaluate_reconstruction(
-    original: np.ndarray,
-    reconstructed: np.ndarray,
-    label: str = ""
+    original: np.ndarray, reconstructed: np.ndarray, label: str = ""
 ) -> dict:
     # runs all the metrics I care about in one go
     # returns a dict so I can log it or save it to cosmos later
     mse = compute_mse(original, reconstructed)
 
     n_samples, *spatial = original.shape
-    compression_ratio = compute_compression_ratio(
-        tuple(spatial), 1
-    )
+    compression_ratio = compute_compression_ratio(tuple(spatial), 1)
 
     results = {
         "label": label,

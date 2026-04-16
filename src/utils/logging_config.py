@@ -21,7 +21,7 @@ def get_logger(name: str) -> logging.Logger:
     # keep it readable - timestamp, module name, message
     fmt = logging.Formatter(
         "%(asctime)s | %(name)s | %(levelname)s | %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
     console.setFormatter(fmt)
     logger.addHandler(console)

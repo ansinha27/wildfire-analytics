@@ -13,12 +13,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from config import (
-    get_storage,
-    data_config,
-    assimilation_config,
-    path_config
-)
+from config import get_storage, data_config, assimilation_config, path_config
 from src.assimilation.kalman_linear import LinearAssimilator
 from src.utils.logging_config import get_logger
 from src.utils.visualisation import plot_assimilation_results
@@ -35,7 +30,7 @@ def parse_args():
         "--beta",
         type=float,
         default=assimilation_config.beta,
-        help=f"observation error scale (default: {assimilation_config.beta})"
+        help=f"observation error scale (default: {assimilation_config.beta})",
     )
     return parser.parse_args()
 
@@ -55,16 +50,12 @@ def main():
     compressor = storage.load_model(path_config.tsvd_model)
     mean = storage.load_array(path_config.mean_train)
 
-    assimilator = LinearAssimilator(
-        compressor=compressor,
-        mean=mean,
-        beta=args.beta
-    )
+    assimilator = LinearAssimilator(compressor=compressor, mean=mean, beta=args.beta)
 
     results = assimilator.run(
         background_path=data_config.background_path,
         obs_path=data_config.obs_path,
-        truth_path=data_config.test_path
+        truth_path=data_config.test_path,
     )
 
     # visualise a few frames
@@ -82,9 +73,7 @@ def main():
         f"improvement    : "
         f"{((results['mse_background'] - results['mse_physical']) / results['mse_background'] * 100):.1f}%"
     )
-    logger.info(
-        f"latent update  : {results['latent_update_time_s']}s"
-    )
+    logger.info(f"latent update  : {results['latent_update_time_s']}s")
 
 
 if __name__ == "__main__":

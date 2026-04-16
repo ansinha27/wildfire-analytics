@@ -29,19 +29,16 @@ def parse_args():
         "--n_epochs",
         type=int,
         default=ae_config.n_epochs,
-        help=f"max training epochs (default: {ae_config.n_epochs})"
+        help=f"max training epochs (default: {ae_config.n_epochs})",
     )
     parser.add_argument(
-        "--latent_dim",
-        type=int,
-        default=ae_config.latent_dim,
-        help="bottleneck size"
+        "--latent_dim", type=int, default=ae_config.latent_dim, help="bottleneck size"
     )
     parser.add_argument(
         "--batch_size",
         type=int,
         default=ae_config.batch_size,
-        help="training batch size"
+        help="training batch size",
     )
     return parser.parse_args()
 
@@ -65,7 +62,7 @@ def main():
         lr=ae_config.lr,
         alpha_mse=ae_config.alpha_mse,
         alpha_edge=ae_config.alpha_edge,
-        patience=ae_config.patience
+        patience=ae_config.patience,
     )
 
     with Timer("full encoding pipeline") as t:
@@ -81,7 +78,7 @@ def main():
         "latent_dim": args.latent_dim,
         "training_time_s": t.elapsed,
         "reconstruction_time_s": recon_time,
-        "mse": mse
+        "mse": mse,
     }
     storage.save_results(results, "encoding_results")
 
