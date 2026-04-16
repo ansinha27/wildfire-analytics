@@ -47,13 +47,11 @@ class TSVDCompressor:
         # set max_train_samples in config to run on a
         # small subset first - useful for verifying the
         # pipeline works before committing to a full run
-        if hasattr(self, 'max_samples') and self.max_samples:
+        if hasattr(self, "max_samples") and self.max_samples:
             n_train = min(n_train, self.max_samples)
             X = X[:n_train]
             logger.info(f"test mode: using {n_train} samples")
         # ────────────────────────────────────────────
-
-
 
         self._spatial = tuple(spatial)
         n_feats = int(np.prod(spatial))

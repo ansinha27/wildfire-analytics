@@ -23,26 +23,18 @@ logger = get_logger(__name__)
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Data fusion in TSVD latent space"
+    parser = argparse.ArgumentParser(description="Data fusion in TSVD latent space")
+    parser.add_argument(
+        "--idx1", type=int, default=0, help="index of first observation frame"
     )
     parser.add_argument(
-        "--idx1",
-        type=int,
-        default=0,
-        help="index of first observation frame"
-    )
-    parser.add_argument(
-        "--idx2",
-        type=int,
-        default=-1,
-        help="index of second observation frame"
+        "--idx2", type=int, default=-1, help="index of second observation frame"
     )
     parser.add_argument(
         "--threshold",
         type=float,
         default=0.5,
-        help="threshold for binary mask (default: 0.5)"
+        help="threshold for binary mask (default: 0.5)",
     )
     return parser.parse_args()
 
@@ -69,7 +61,7 @@ def main():
             obs_path=data_config.obs_path,
             idx1=args.idx1,
             idx2=args.idx2,
-            threshold=args.threshold
+            threshold=args.threshold,
         )
 
     # save visualisation
@@ -77,7 +69,7 @@ def main():
         obs1=result["obs1"],
         obs2=result["obs2"],
         fused=result["fused"],
-        binary=result["binary"]
+        binary=result["binary"],
     )
 
     results = {
@@ -85,7 +77,7 @@ def main():
         "idx1": args.idx1,
         "idx2": args.idx2,
         "fusion_time_s": t.elapsed,
-        "method": "tsvd_latent_average"
+        "method": "tsvd_latent_average",
     }
     storage.save_results(results, "fusion_results")
 
