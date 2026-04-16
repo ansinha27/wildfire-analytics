@@ -59,12 +59,12 @@ class AEConfig:
     """
     Hyperparameters for the UNet Autoencoder.
 
-    latent_dim:  bottleneck size — matched to TSVD n_components
+    latent_dim:  bottleneck size - matched to TSVD n_components
                  so comparisons are fair
     batch_size:  32 fills GPU memory efficiently
     lr:          1e-3 initial, halved every 30 epochs
     alpha_mse:   weight on pixel-wise reconstruction loss
-    alpha_edge:  weight on Sobel edge loss — preserves
+    alpha_edge:  weight on Sobel edge loss - preserves
                  sharp fire boundaries
     patience:    early stopping patience in epochs
     """
@@ -89,7 +89,7 @@ class AssimilationConfig:
 
     beta: observation error scaling factor.
           R = beta * I in latent space.
-          Tuned by validation sweep — 0.68 gave best
+          Tuned by validation sweep - 0.68 gave best
           MSE in both linear and nonlinear experiments.
           Too small: over-fits noisy observations.
           Too large: ignores valuable observations.
@@ -103,7 +103,7 @@ class AssimilationConfig:
 class AzureConfig:
     """
     Azure service configuration.
-    All values read from environment variables —
+    All values read from environment variables -
     never hardcode credentials.
     """
     storage_connection_str: str = field(
@@ -170,6 +170,16 @@ def get_storage():
     else:
         from src.storage.local import LocalStorage
         return LocalStorage()
+    
+@dataclass
+class CompressionConfig:
+    n_components:  int   = 10      # reduced for testing
+    var_threshold: float = 0.95
+    subset_size:   int   = 500
+    batch_size:    int   = 50
+    n_iter:        int   = 7
+    # add this ↓
+    max_train_samples: int = 500   # set to None for full run
 
 
 # Instantiate configs 

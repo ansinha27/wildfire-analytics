@@ -1,11 +1,11 @@
-# run_encoding.py
+# run_fusion.py
 #
-# Trains the UNet autoencoder and evaluates
-# reconstruction MSE on test data.
+# Fuses two satellite observations in TSVD latent space.
+# Requires compression stage to have run first.
 #
 # Usage:
-#   python scripts/run_encoding.py
-#   python scripts/run_encoding.py --n_epochs 50
+#   python scripts/run_fusion.py
+#   python scripts/run_fusion.py --idx1 0 --idx2 10
 
 import argparse
 import sys
@@ -13,31 +13,36 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from config import get_storage, data_config, ae_config, path_config
-from src.compression.autoencoder import AutoencoderCompressor
+from config import get_storage, data_config, path_config
+from src.fusion.latent_fusion import LatentFusion
 from src.utils.logging_config import get_logger
 from src.utils.metrics import Timer
+from src.utils.visualisation import plot_fusion_result
 
 logger = get_logger(__name__)
 
 
 def parse_args():
-
-    parser = argparse.ArgumentParser(description="Data fusion in TSVD latent space")
-    parser.add_argument(
-        "--n_epochs",
-        type=int,
-        default=ae_config.n_epochs,
-        help=f"max training epochs (default: {ae_config.n_epochs})",
+    parser = argparse.ArgumentParser(
+        description="Data fusion in TSVD latent space"
     )
     parser.add_argument(
-        "--latent_dim", type=int, default=ae_config.latent_dim, help="bottleneck size"
+        "--idx1",
+        type=int,
+        default=0,
+        help="index of first observation frame"
     )
     parser.add_argument(
-        "--batch_size",
+        "--idx2",
         type=int,
-        default=ae_config.batch_size,
-        help="training batch size",
+        default=-1,
+        help="index of second observation frame"
+    )
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=0.5,
+        help="threshold for binary mask (default: 0.5)"
     )
     return parser.parse_args()
 
@@ -47,46 +52,48 @@ def main():
     storage = get_storage()
 
     logger.info("=" * 50)
-    logger.info("NONLINEAR COMPRESSION — UNet Autoencoder")
+    logger.info("DATA FUSION — Latent Space")
     logger.info("=" * 50)
-    logger.info(f"latent_dim : {args.latent_dim}")
-    logger.info(f"n_epochs   : {args.n_epochs}")
-    logger.info(f"batch_size : {args.batch_size}")
-    logger.info(f"train data : {data_config.train_path}")
+    logger.info(f"obs frame 1 : {args.idx1}")
+    logger.info(f"obs frame 2 : {args.idx2}")
+    logger.info(f"threshold   : {args.threshold}")
 
-    encoder = AutoencoderCompressor(
-        latent_dim=args.latent_dim,
-        batch_size=args.batch_size,
-        n_epochs=args.n_epochs,
-        lr=ae_config.lr,
-        alpha_mse=ae_config.alpha_mse,
-        alpha_edge=ae_config.alpha_edge,
-        patience=ae_config.patience,
+    # load compression artifacts from previous stage
+    compressor = storage.load_model(path_config.tsvd_model)
+    mean = storage.load_array(path_config.mean_train)
+
+    fusion = LatentFusion(compressor=compressor, mean=mean)
+
+    with Timer("data fusion") as t:
+        result = fusion.fuse(
+            obs_path=data_config.obs_path,
+            idx1=args.idx1,
+            idx2=args.idx2,
+            threshold=args.threshold
+        )
+
+    # save visualisation
+    plot_fusion_result(
+        obs1=result["obs1"],
+        obs2=result["obs2"],
+        fused=result["fused"],
+        binary=result["binary"]
     )
 
-    with Timer("full encoding pipeline") as t:
-        encoder.fit(data_config.train_path)
-
-    logger.info("model artifacts saved")
-
-    # evaluate
-    mse, recon_time = encoder.evaluate(data_config.test_path)
-
     results = {
-        "stage": "encoding",
-        "latent_dim": args.latent_dim,
-        "training_time_s": t.elapsed,
-        "reconstruction_time_s": recon_time,
-        "mse": mse,
+        "stage": "fusion",
+        "idx1": args.idx1,
+        "idx2": args.idx2,
+        "fusion_time_s": t.elapsed,
+        "method": "tsvd_latent_average"
     }
-    storage.save_results(results, "encoding_results")
+    storage.save_results(results, "fusion_results")
 
     logger.info("=" * 50)
     logger.info("RESULTS")
     logger.info("=" * 50)
-    logger.info(f"training time     : {t.elapsed}s")
-    logger.info(f"reconstruction MSE: {mse:.3e}")
-    logger.info(f"reconstruction time: {recon_time}s")
+    logger.info(f"fusion time : {t.elapsed}s")
+    logger.info("figure saved to outputs/figures/")
 
 
 if __name__ == "__main__":

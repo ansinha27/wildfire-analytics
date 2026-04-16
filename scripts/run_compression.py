@@ -47,7 +47,7 @@ def main():
     storage = get_storage()
 
     logger.info("=" * 50)
-    logger.info("LINEAR COMPRESSION — TruncatedSVD")
+    logger.info("LINEAR COMPRESSION - TruncatedSVD")
     logger.info("=" * 50)
     logger.info(f"n_components : {args.n_components}")
     logger.info(f"batch_size   : {args.batch_size}")
