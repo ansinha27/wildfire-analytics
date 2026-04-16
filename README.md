@@ -1,10 +1,9 @@
 # Ferguson Wildfire Analytics Pipeline
 
 A modular, production-grade Python pipeline for large-scale wildfire data
-compression, fusion and assimilation - built from real simulation and satellite
+compression, fusion and assimilation built from real simulation and satellite
 data of the Ferguson wildfire (California, 2018).
 
-![tests](https://github.com/ansinha27/ferguson-wildfire-analytics/actions/workflows/run_tests.yml/badge.svg)
 
 ---
 
