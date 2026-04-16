@@ -1,0 +1,12 @@
+
+# Azure Storage
+azure-storage-blob>=12.19.0
+
+# Azure Cosmos DB
+azure-cosmos>=4.5.0
+
+# Azure Functions
+azure-functions>=1.17.0
+
+# Azure Identity (for secure auth)
+azure-identity>=1.15.0
